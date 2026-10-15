@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="ru" class="light">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ПРО ХОККЕЙ — Официальный магазин экипировки</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "var(--color-primary)",
+            "primary-container": "var(--color-primary-container)",
+            "secondary": "var(--color-secondary)",
+            "secondary-container": "var(--color-secondary-container)",
+            "surface": "var(--color-surface)",
+            "surface-container-lowest": "var(--color-surface-container-lowest)",
+            "surface-container-low": "var(--color-surface-container-low)",
+            "surface-container": "var(--color-surface-container)",
+            "surface-container-high": "var(--color-surface-container-high)",
+            "surface-container-highest": "var(--color-surface-container-highest)",
+            "on-surface": "var(--color-on-surface)",
+            "on-surface-variant": "var(--color-on-surface-variant)",
+            "outline": "var(--color-outline)",
+            "outline-variant": "var(--color-outline-variant)",
+            "error": "var(--color-error)"
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen flex flex-col pb-24 md:pb-8 selection:bg-secondary selection:text-white">
+
+  <div id="toast" class="fixed top-5 right-5 z-[100] transform transition-all duration-300 translate-y-[-100px] opacity-0 pointer-events-none bg-surface-container-lowest/95 backdrop-blur-md border border-outline-variant/40 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3">
+    <span id="toastIcon" class="material-symbols-outlined text-secondary">info</span>
+    <span id="toastMsg" class="font-bold text-sm"></span>
+  </div>
+
+  <div class="bg-primary text-white py-2 px-4 text-xs font-semibold overflow-hidden border-b border-white/10 hidden sm:block">
+    <div class="ticker-track flex gap-12 whitespace-nowrap">
+      <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-secondary animate-ping"></span> НОВЫЙ ДРОП PRO STOCK 2026: BAUER VAPORX & CCM TRIGGER 8 В НАЛИЧИИ</span>
+      <span class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-secondary">bolt</span> ЭКСПРЕСС-ДОСТАВКА К РАСКАТКЕ НА ЛЕДОВЫЕ АРЕНЫ</span>
+      <span class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-secondary">straighten</span> БЕСПЛАТНЫЙ 3D-СКАНЕР СТОПЫ И ТЕРМОФОРМОВКА В ШОУРУМЕ</span>
+      <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-secondary animate-ping"></span> НОВЫЙ ДРОП PRO STOCK 2026: BAUER VAPORX & CCM TRIGGER 8 В НАЛИЧИИ</span>
+    </div>
+  </div>
+
+  <header class="bg-surface/90 backdrop-blur-md border-b border-outline-variant/40 sticky top-0 z-40 transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button id="navBackBtn" onclick="goBack()" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-transform active:scale-90 text-primary hidden">
+          <span class="material-symbols-outlined text-2xl">arrow_back</span>
+        </button>
+        <button onclick="navigateTo('home')" class="flex items-center gap-2.5 group text-left">
+          <div class="w-10 h-10 rounded-xl bg-primary text-white dark:text-black flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors duration-300 shadow-md">
+            <span class="material-symbols-outlined text-2xl group-hover:rotate-12 transition-transform">sports_hockey</span>
+          </div>
+          <div>
+            <span class="font-black text-xl tracking-tighter uppercase block leading-none text-primary">ПРО ХОККЕЙ</span>
+            <span class="text-[9px] font-bold text-secondary uppercase tracking-widest block mt-0.5">Pro Stock Elite</span>
+          </div>
+        </button>
+      </div>
+
+      <nav class="hidden md:flex items-center gap-6 font-semibold text-xs uppercase tracking-wider text-on-surface-variant">
+        <button onclick="navigateTo('home')" class="hover:text-secondary transition-colors nav-link" data-screen="home">Главная</button>
+        <button onclick="navigateTo('catalog')" class="hover:text-secondary transition-colors nav-link" data-screen="catalog">Каталог</button>
+        <button onclick="openSizeGuideModal('sticks')" class="hover:text-secondary transition-colors text-secondary flex items-center gap-1 font-bold">
+          <span class="material-symbols-outlined text-base">straighten</span> Таблицы размеров
+        </button>
+        <button onclick="navigateTo('showroom')" class="hover:text-secondary transition-colors nav-link" data-screen="showroom">Шоурум</button>
+        <button onclick="navigateTo('map')" class="hover:text-secondary transition-colors nav-link" data-screen="map">Арены и Пункты</button>
+        <button onclick="navigateTo('reviews')" class="hover:text-secondary transition-colors nav-link" data-screen="reviews">Отзывы</button>
+        <button onclick="navigateTo('profile')" class="hover:text-secondary transition-colors nav-link" data-screen="profile">Кабинет игрока</button>
+      </nav>
+
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <button onclick="toggleTheme()" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-transform active:scale-90 text-on-surface-variant" title="Переключить тему">
+          <span id="themeIcon" class="material-symbols-outlined text-xl">dark_mode</span>
+        </button>
+        <button onclick="navigateTo('search')" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-transform active:scale-90 text-on-surface-variant" title="Поиск">
+          <span class="material-symbols-outlined text-xl">search</span>
+        </button>
+        <button onclick="navigateTo('cart')" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-transform active:scale-90 text-on-surface-variant relative" title="Корзина">
+          <span class="material-symbols-outlined text-xl">shopping_cart</span>
+          <span id="headerCartBadge" class="absolute top-1.5 right-1.5 w-4 h-4 bg-secondary text-white text-[10px] font-bold rounded-full flex items-center justify-center scale-0 transition-transform duration-300">0</span>
+        </button>
+        <button onclick="navigateTo('profile')" class="hidden md:flex w-10 h-10 rounded-full items-center justify-center hover:bg-surface-container-high transition-transform active:scale-90 text-on-surface-variant" title="Кабинет игрока">
+          <span class="material-symbols-outlined text-xl">person</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6">
+
+    <section id="screen-home" class="screen-view active flex-col gap-12">
+      <div class="relative w-full min-h-[520px] md:min-h-[620px] rounded-3xl overflow-hidden shadow-2xl border border-outline-variant/30 bg-[#070d17] flex flex-col justify-end p-6 md:p-14">
+        <video id="heroHockeyVideo" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 pointer-events-none" autoplay loop muted playsinline preload="auto">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" type="video/mp4"/>
+        </video>
+        <div id="heroPosterFallback" class="absolute inset-0 w-full h-full bg-cover bg-center kenburns-effect" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBodCSXkyreicyuSozq8fjUhiP9fiwAOiAWNrbcbqOOs1EFpdPN0Cra5i_qg5ByKvvVikW_4Ko8OC1Ti8d-eyv1n68ZZhGv6BjJ8k1Sgfp_f5waae0b9MLXLcZ4a5BTbFHvoWD95TgNsWdQHaEyoJomKIM-eD5nZ8UXWrKnrlqeq7wUhHO9B87dqYc6WypDaFf5TkO2PG3qwpt-Pqiqj7u1lWC_G2jtKMksMPahXTAcKnAaSL1hPMEYelO31U11aoS_7yBSuOBi6M6X');"></div>
+        <div class="absolute inset-0 hero-gradient-overlay pointer-events-none"></div>
+
+        <div class="absolute top-5 right-5 z-20 flex items-center gap-2">
+          <button onclick="toggleHeroVideoSound()" id="videoSoundBtn" class="bg-black/60 hover:bg-black/85 backdrop-blur-md text-white w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90 border border-white/20 shadow-lg">
+            <span class="material-symbols-outlined text-xl" id="videoSoundIcon">volume_off</span>
+          </button>
+          <button onclick="toggleHeroVideoPlay()" id="videoPlayBtn" class="bg-black/60 hover:bg-black/85 backdrop-blur-md text-white w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90 border border-white/20 shadow-lg">
+            <span class="material-symbols-outlined text-xl" id="videoPlayIcon">pause</span>
+          </button>
+        </div>
+
+        <div class="relative z-20 max-w-2xl flex flex-col items-start">
+          <div class="flex flex-wrap items-center gap-2 mb-4">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary text-white text-xs font-black rounded-full uppercase tracking-wider shadow-lg">
+              <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
+              Сезон 2026 • Pro Stock
+            </span>
+            <span class="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold rounded-full uppercase">
+              Спецзаказ для лиги
+            </span>
+          </div>
+
+          <h1 class="text-3xl sm:text-4xl md:text-6xl font-black text-white leading-tight mb-4 tracking-tight uppercase">
+            Собери свою <br/><span class="text-secondary drop-shadow-md">экипировку</span>
+          </h1>
+
+          <p class="text-sm md:text-base text-surface-container-high mb-8 max-w-xl leading-relaxed font-medium">
+            Ощутите непревзойденную точность, легкость и жесткость с оригинальной экипировкой мировых брендов Bauer, CCM и Warrior.
+          </p>
+
+          <div class="flex flex-wrap gap-3.5 w-full sm:w-auto">
+            <button onclick="navigateTo('catalog')" class="w-full sm:w-auto bg-secondary text-white hover:bg-secondary-container font-black text-xs uppercase tracking-wider px-8 py-4 rounded-xl transition-all duration-300 shadow-xl active:scale-95 flex items-center justify-center gap-2.5">
+              <span>Перейти в магазин</span>
+              <span class="material-symbols-outlined text-base">arrow_forward</span>
+            </button>
+            <button onclick="scrollToHomeFittingTool()" class="w-full sm:w-auto bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/30 font-bold text-xs uppercase tracking-wider px-7 py-4 rounded-xl transition-all duration-300 active:scale-95 flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined text-base text-secondary">tune</span>
+              <span>Экспресс-подбор снаряжения</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-8 mt-8 border-t border-white/15 relative z-20 w-full">
+          <div class="bg-black/30 backdrop-blur-md p-3 rounded-2xl border border-white/10">
+            <div class="text-2xl font-black text-white font-mono">385 г</div>
+            <div class="text-[10px] text-surface-container-highest uppercase font-bold tracking-wider">Рекордный вес клюшки</div>
+          </div>
+          <div class="bg-black/30 backdrop-blur-md p-3 rounded-2xl border border-white/10">
+            <div class="text-2xl font-black text-secondary font-mono">+14%</div>
+            <div class="text-[10px] text-surface-container-highest uppercase font-bold tracking-wider">Скорость схода шайбы</div>
+          </div>
+          <div class="bg-black/30 backdrop-blur-md p-3 rounded-2xl border border-white/10">
+            <div class="text-2xl font-black text-white font-mono">3D Fit</div>
+            <div class="text-[10px] text-surface-container-highest uppercase font-bold tracking-wider">Точная посадка конька</div>
+          </div>
+          <div class="bg-black/30 backdrop-blur-md p-3 rounded-2xl border border-white/10">
+            <div class="text-2xl font-black text-white font-mono">100%</div>
+            <div class="text-[10px] text-surface-container-highest uppercase font-bold tracking-wider">Оригинальный Pro Stock</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="homeFittingLab" class="bg-surface-container-lowest rounded-3xl border border-outline-variant/40 p-6 md:p-10 shadow-lg relative overflow-hidden">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+          <div>
+            <span class="text-secondary font-bold text-xs uppercase tracking-wider block">Интерактивный помощник</span>
+            <h2 class="text-2xl md:text-3xl font-black text-primary uppercase tracking-tight">Подбор жесткости и загиба за 10 секунд</h2>
+          </div>
+          <button onclick="openSizeGuideModal('sticks')" class="text-secondary text-xs font-bold hover:underline flex items-center gap-1 uppercase tracking-wider">
+            <span class="material-symbols-outlined text-sm">straighten</span> Полная таблица размеров
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-bold text-primary uppercase tracking-wider">Ваш вес (кг): <span id="weightDisplayVal" class="text-secondary font-mono">85 кг</span></label>
+            <input type="range" id="fitWeightInput" min="40" max="120" value="85" oninput="updateInteractiveFitting()" class="accent-secondary w-full cursor-pointer"/>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-bold text-primary uppercase tracking-wider">Ваш рост (см): <span id="heightDisplayVal" class="text-secondary font-mono">182 см</span></label>
+            <input type="range" id="fitHeightInput" min="140" max="205" value="182" oninput="updateInteractiveFitting()" class="accent-secondary w-full cursor-pointer"/>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-bold text-primary uppercase tracking-wider">Игровой хват</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="setFitHand('left', this)" class="fit-hand-btn active py-2.5 rounded-xl border border-outline-variant text-xs font-bold transition-all">Левый (L)</button>
+              <button onclick="setFitHand('right', this)" class="fit-hand-btn py-2.5 rounded-xl border border-outline-variant text-xs font-bold transition-all">Правый (R)</button>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-bold text-primary uppercase tracking-wider">Стиль игры</label>
+            <select id="fitStyleSelect" onchange="updateInteractiveFitting()" class="bg-surface-container-low border border-outline-variant rounded-xl py-2.5 px-3 text-xs font-bold focus:ring-1 focus:ring-primary">
+              <option value="sniper">Снайпер (Быстрый кистевой бросок)</option>
+              <option value="power">Защитник / Мощный щелчок</option>
+              <option value="playmaker">Плеймейкер (Передачи и контроль)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="fittingResultBox" class="bg-surface-container-low rounded-2xl p-5 border border-outline-variant/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-secondary text-white flex items-center justify-center flex-shrink-0 shadow">
+              <span class="material-symbols-outlined text-2xl">verified</span>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-on-surface-variant uppercase">Ваша идеальная конфигурация:</div>
+              <div class="text-base sm:text-lg font-black text-primary" id="fittingResultTitle">87 Flex • Загиб P92 (Matthews) • Длина 60"</div>
+            </div>
+          </div>
+          <button onclick="applyFitToProductAndOpen('stick-vapor')" class="w-full sm:w-auto bg-primary text-white hover:bg-secondary px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shadow">
+            Посмотреть флагман с этим параметром
+          </button>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-secondary font-bold text-xs uppercase tracking-wider block">Категории снаряжения</span>
+            <h2 class="text-2xl font-black text-primary uppercase tracking-tight">Экипировка в наличии</h2>
+          </div>
+          <button onclick="navigateTo('catalog')" class="text-secondary hover:underline text-xs font-bold flex items-center gap-1 uppercase tracking-wider">
+            Весь каталог <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </button>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <button onclick="filterAndOpenCatalog('sticks')" class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/40 flex flex-col items-center group hover:border-secondary transition-all shadow-sm hover:shadow-xl hover:-translate-y-1">
+            <div class="w-16 h-16 rounded-2xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-secondary group-hover:text-white transition-colors mb-3">
+              <span class="material-symbols-outlined text-3xl">sports_hockey</span>
+            </div>
+            <span class="text-sm font-black text-primary">Клюшки</span>
+            <span class="text-xs text-on-surface-variant mt-0.5">Карбон 18K • Low & Mid-Kick</span>
+          </button>
+          <button onclick="filterAndOpenCatalog('skates')" class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/40 flex flex-col items-center group hover:border-secondary transition-all shadow-sm hover:shadow-xl hover:-translate-y-1">
+            <div class="w-16 h-16 rounded-2xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-secondary group-hover:text-white transition-colors mb-3">
+              <span class="material-symbols-outlined text-3xl">ice_skating</span>
+            </div>
+            <span class="text-sm font-black text-primary">Коньки</span>
+            <span class="text-xs text-on-surface-variant mt-0.5">Термоформовка Fit 1/2/3</span>
+          </button>
+          <button onclick="filterAndOpenCatalog('helmets')" class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/40 flex flex-col items-center group hover:border-secondary transition-all shadow-sm hover:shadow-xl hover:-translate-y-1">
+            <div class="w-16 h-16 rounded-2xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-secondary group-hover:text-white transition-colors mb-3">
+              <span class="material-symbols-outlined text-3xl">sports_motorsports</span>
+            </div>
+            <span class="text-sm font-black text-primary">Шлемы</span>
+            <span class="text-xs text-on-surface-variant mt-0.5">Защита 3D FreeForm</span>
+          </button>
+          <button onclick="filterAndOpenCatalog('gloves')" class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/40 flex flex-col items-center group hover:border-secondary transition-all shadow-sm hover:shadow-xl hover:-translate-y-1">
+            <div class="w-16 h-16 rounded-2xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-secondary group-hover:text-white transition-colors mb-3">
+              <span class="material-symbols-outlined text-3xl">front_hand</span>
+            </div>
+            <span class="text-sm font-black text-primary">Краги</span>
+            <span class="text-xs text-on-surface-variant mt-0.5">Ладошка Pro Palm 13"-15"</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-search" class="screen-view flex-col gap-6 max-w-2xl mx-auto">
+      <div>
+        <span class="text-secondary font-bold text-xs uppercase tracking-wider">Каталог и поиск</span>
+        <h2 class="text-2xl font-black text-primary uppercase tracking-tight">Поиск экипировки</h2>
+      </div>
+
+      <div class="relative group">
+        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
+        <input type="text" id="liveSearchInput" oninput="handleSearchScreenInput(this.value)" placeholder="Поиск экипировки, клюшек, коньков..." class="w-full pl-12 pr-12 py-4 bg-surface-container-lowest border border-outline-variant rounded-2xl focus:border-primary focus:ring-1 focus:ring-primary font-medium text-sm text-on-surface shadow-sm"/>
+        <button onclick="clearSearchScreenInput()" class="absolute right-4 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-surface-container-high flex items-center justify-center hover:bg-secondary hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
+
+      <div id="searchSuggestionsBox">
+        <h3 class="text-sm font-bold text-on-surface mb-3 flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary text-base">trending_up</span>
+          Популярные запросы
+        </h3>
+        <div class="flex flex-col divide-y divide-outline-variant/30 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-2">
+          <button onclick="selectSearchQuery('Композитные клюшки')" class="flex items-center justify-between p-3 hover:bg-surface-container-low transition-colors rounded-xl text-left">
+            <span class="text-sm font-semibold text-on-surface-variant">Композитные клюшки</span>
+            <span class="material-symbols-outlined text-outline text-base">arrow_outward</span>
+          </button>
+          <button onclick="selectSearchQuery('Шлемы')" class="flex items-center justify-between p-3 hover:bg-surface-container-low transition-colors rounded-xl text-left">
+            <span class="text-sm font-semibold text-on-surface-variant">Юниорские и взрослые шлемы</span>
+            <span class="material-symbols-outlined text-outline text-base">arrow_outward</span>
+          </button>
+          <button onclick="selectSearchQuery('Коньки')" class="flex items-center justify-between p-3 hover:bg-surface-container-low transition-colors rounded-xl text-left">
+            <span class="text-sm font-semibold text-on-surface-variant">Коньки с подбором Fit 1/2/3</span>
+            <span class="material-symbols-outlined text-outline text-base">arrow_outward</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-catalog" class="screen-view flex-col gap-6">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <span class="text-secondary font-bold text-xs uppercase tracking-wider">Оригинальная продукция</span>
+          <h2 class="text-2xl md:text-3xl font-black text-primary uppercase tracking-tight">Каталог экипировки</h2>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="relative flex-1 md:w-64">
+            <input type="text" id="catalogSearchInput" oninput="handleCatalogSearch()" placeholder="Поиск в каталоге..." class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl pl-9 pr-3 py-2 text-xs focus:ring-1 focus:ring-primary focus:border-primary"/>
+            <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline-variant text-lg">search</span>
+          </div>
+          <select id="catalogSortSelect" onchange="handleCatalogSort()" class="bg-surface-container-lowest border border-outline-variant rounded-xl py-2 px-3 text-xs focus:ring-1 focus:ring-primary focus:border-primary">
+            <option value="popular">По популярности</option>
+            <option value="price-asc">Сначала дешевле</option>
+            <option value="price-desc">Сначала дороже</option>
+            <option value="weight-asc">По весу (легче)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none" id="catalogFiltersBar">
+        <button onclick="setFilterChip('all', this)" class="chip-filter active px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-primary text-white transition-all shadow-sm">Все товары</button>
+        <button onclick="setFilterChip('sticks', this)" class="chip-filter px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-all">Клюшки</button>
+        <button onclick="setFilterChip('skates', this)" class="chip-filter px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-all">Коньки</button>
+        <button onclick="setFilterChip('helmets', this)" class="chip-filter px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-all">Шлемы</button>
+        <button onclick="setFilterChip('gloves', this)" class="chip-filter px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-all">Краги</button>
+        <button onclick="setFilterChip('accessories', this)" class="chip-filter px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-all">Аксессуары</button>
+      </div>
+
+      <div id="catalogGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+
+      <div id="catalogEmptyState" class="hidden flex-col items-center justify-center py-16 text-center">
+        <span class="material-symbols-outlined text-6xl text-outline-variant mb-2">search_off</span>
+        <h3 class="font-bold text-lg text-primary mb-1">Ничего не найдено</h3>
+        <p class="text-xs text-on-surface-variant mb-4">Попробуйте изменить запрос или сбросить фильтры</p>
+        <button onclick="resetCatalogFilters()" class="bg-primary text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider">Сбросить фильтры</button>
+      </div>
+    </section>
+
+    <section id="screen-product" class="screen-view flex-col gap-10 max-w-5xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+        <div class="bg-surface-container-lowest rounded-3xl border border-outline-variant/30 p-8 flex flex-col items-center relative overflow-hidden shadow-sm">
+          <div class="w-full aspect-square flex items-center justify-center">
+            <img id="detailProductImage" src="" alt="" class="max-h-full max-w-full object-contain transition-transform duration-500 hover:scale-105"/>
+          </div>
+          <span id="detailBadge" class="absolute top-5 left-5 bg-secondary text-white text-xs px-2.5 py-1 rounded font-bold uppercase tracking-wider">Pro Stock</span>
+          <button onclick="toggleFavoriteCurrent()" id="detailFavBtn" class="absolute top-5 right-5 w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-outline hover:text-secondary transition-colors">
+            <span class="material-symbols-outlined text-2xl">favorite</span>
+          </button>
+        </div>
+
+        <div class="flex flex-col gap-6">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span id="detailBrand" class="text-xs font-bold uppercase tracking-wider text-secondary"></span>
+              <span id="detailSku" class="text-xs text-on-surface-variant font-mono"></span>
+            </div>
+            <h2 id="detailTitle" class="text-2xl md:text-3xl font-black text-primary tracking-tight"></h2>
+            <div class="flex items-center gap-2 mt-2">
+              <div class="flex text-secondary text-sm">
+                <span class="material-symbols-outlined text-base font-fill">star</span>
+                <span class="material-symbols-outlined text-base font-fill">star</span>
+                <span class="material-symbols-outlined text-base font-fill">star</span>
+                <span class="material-symbols-outlined text-base font-fill">star</span>
+                <span class="material-symbols-outlined text-base font-fill">star</span>
+              </div>
+              <span id="detailReviewsCount" class="text-xs text-on-surface-variant font-semibold"></span>
+            </div>
+          </div>
+
+          <div class="flex items-baseline gap-3 pb-4 border-b border-outline-variant/30">
+            <span id="detailPrice" class="text-3xl font-black text-primary"></span>
+            <span id="detailOldPrice" class="text-sm text-outline-variant line-through"></span>
+          </div>
+
+          <div class="flex items-center justify-between bg-surface-container-low p-3.5 rounded-2xl border border-outline-variant/40">
+            <div class="flex items-center gap-2 text-xs font-bold text-primary">
+              <span class="material-symbols-outlined text-secondary">straighten</span>
+              <span>Не уверены в выборе размера?</span>
+            </div>
+            <button id="openSizeGuideTriggerBtn" onclick="openCurrentProductSizeGuide()" class="text-secondary text-xs font-bold uppercase tracking-wider hover:underline flex items-center gap-1">
+              Таблица размеров <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+          </div>
+
+          <div id="dynamicSizeSelectorsContainer" class="flex flex-col gap-5"></div>
+
+          <p id="detailDescription" class="text-xs md:text-sm text-on-surface-variant leading-relaxed"></p>
+
+          <div class="flex gap-3 pt-4 border-t border-outline-variant/30">
+            <button onclick="addCurrentProductToCart()" class="flex-1 bg-secondary text-white py-4 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-secondary-container transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined text-lg">shopping_cart</span>
+              В корзину
+            </button>
+            <button onclick="navigateTo('cart')" class="bg-surface-container-high text-primary px-5 py-4 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-surface-container-highest transition-all">
+              В корзину
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-surface-container-lowest rounded-3xl border border-outline-variant/30 p-6 md:p-8 shadow-sm">
+        <h3 class="text-xl font-black text-primary uppercase mb-4 tracking-tight">Технические характеристики</h3>
+        <div id="detailSpecsTable" class="divide-y divide-outline-variant/20"></div>
+      </div>
+    </section>
+
+    <section id="screen-cart" class="screen-view flex-col gap-6 max-w-3xl mx-auto">
+      <div class="flex items-center justify-between pb-2 border-b border-outline-variant/30">
+        <div>
+          <span class="text-secondary font-bold text-xs uppercase tracking-wider">Корзина</span>
+          <h2 class="text-2xl font-black text-primary uppercase tracking-tight">Ваш заказ экипировки</h2>
+        </div>
+        <button onclick="clearCart()" class="text-xs text-error font-bold hover:underline flex items-center gap-1">
+          <span class="material-symbols-outlined text-sm">delete_sweep</span> Очистить
+        </button>
+      </div>
+
+      <div id="cartItemsList" class="flex flex-col gap-3"></div>
+
+      <div id="cartEmptyState" class="hidden flex-col items-center justify-center py-16 text-center">
+        <span class="material-symbols-outlined text-6xl text-outline-variant mb-3">remove_shopping_cart</span>
+        <h3 class="text-lg font-bold text-primary mb-1">Корзина пуста</h3>
+        <p class="text-xs text-on-surface-variant mb-4">Добавьте нужную экипировку из каталога</p>
+        <button onclick="navigateTo('catalog')" class="bg-primary text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider">Перейти в каталог</button>
+      </div>
+
+      <div id="cartSummaryBox" class="bg-surface-container-lowest rounded-3xl border border-outline-variant/30 p-6 shadow-sm flex flex-col gap-4">
+        <div class="flex gap-2">
+          <input type="text" id="promoInput" placeholder="Промокод (PRO2026 или MVP10)" class="flex-1 bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-2.5 text-xs uppercase font-mono focus:ring-1 focus:ring-primary focus:border-primary"/>
+          <button onclick="applyPromoCode()" class="bg-primary hover:bg-secondary text-white font-bold px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-colors">Применить</button>
+        </div>
+        <div id="promoMessage" class="text-xs hidden font-semibold"></div>
+
+        <div class="divide-y divide-outline-variant/20 text-xs">
+          <div class="flex justify-between py-2.5 text-on-surface-variant">
+            <span>Подытог:</span>
+            <span id="cartSubtotal" class="font-bold text-on-surface">0 ₽</span>
+          </div>
+          <div class="flex justify-between py-2.5 text-on-surface-variant">
+            <span>Скидка:</span>
+            <span id="cartDiscount" class="font-bold text-secondary">0 ₽</span>
+          </div>
+          <div class="flex justify-between py-2.5 text-on-surface-variant">
+            <span>Доставка:</span>
+            <span id="cartDelivery" class="font-bold text-on-surface">Рассчитывается далее</span>
+          </div>
+          <div class="flex justify-between py-3 text-lg font-black text-primary">
+            <span>Итого:</span>
+            <span id="cartTotal">0 ₽</span>
+          </div>
+        </div>
+
+        <button onclick="navigateTo('checkout')" class="w-full bg-secondary text-white py-4 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-secondary-container transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2">
+          Оформить заказ
+          <span class="material-symbols-outlined text-base">arrow_forward</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="screen-checkout" class="screen-view flex-col gap-6 max-w-xl mx-auto">
+      <div>
+        <div class="flex justify-between items-center mb-1 text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+          <span>Оформление</span>
+          <span>Оплата</span>
+        </div>
+        <div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+          <div class="h-full bg-secondary w-1/2 rounded-full"></div>
+        </div>
+        <h2 class="text-2xl font-black text-primary uppercase tracking-tight mt-4">Данные покупателя</h2>
+      </div>
+
+      <form id="checkoutForm" onsubmit="handleCheckoutSubmit(event)" class="flex flex-col gap-5">
+        <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-5 flex flex-col gap-3 shadow-sm">
+          <div>
+            <label class="block text-xs font-bold text-primary mb-1 uppercase tracking-wider">ФИО *</label>
+            <input type="text" id="orderFullName" required value="Павел Пикта" placeholder="Иванов Иван Иванович" class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-2.5 text-xs focus:ring-1 focus:ring-primary focus:border-primary"/>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-primary mb-1 uppercase tracking-wider">Email *</label>
+            <input type="email" id="orderEmail" required value="pavel@prohockey.by" placeholder="player@prohockey.com" class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-2.5 text-xs focus:ring-1 focus:ring-primary focus:border-primary"/>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-primary mb-1 uppercase tracking-wider">Телефон *</label>
+            <input type="tel" id="orderPhone" required value="+375 (29) 123-45-67" placeholder="+375 (29) 000-00-00" class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-2.5 text-xs focus:ring-1 focus:ring-primary focus:border-primary"/>
+          </div>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-5 flex flex-col gap-3 shadow-sm">
+          <h3 class="text-xs font-bold text-primary uppercase tracking-wider">Способ доставки</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="delivery-radio-card active p-4 rounded-xl border border-outline-variant cursor-pointer flex flex-col items-center text-center gap-2 transition-all">
+              <span class="material-symbols-outlined text-2xl text-secondary">local_shipping</span>
+              <div>
+                <span class="block text-xs font-bold text-primary">Доставка на дом</span>
+                <span class="block text-[10px] text-on-surface-variant">2-4 рабочих дня</span>
+              </div>
+              <input type="radio" name="deliveryMethod" value="home" checked onchange="handleDeliveryChange('home', this)" class="sr-only"/>
+            </label>
+            <label class="delivery-radio-card p-4 rounded-xl border border-outline-variant cursor-pointer flex flex-col items-center text-center gap-2 transition-all">
+              <span class="material-symbols-outlined text-2xl text-on-surface-variant">storefront</span>
+              <div>
+                <span class="block text-xs font-bold text-primary">Самовывоз</span>
+                <span class="block text-[10px] text-on-surface-variant">Доступно сегодня</span>
+              </div>
+              <input type="radio" name="deliveryMethod" value="pickup" onchange="handleDeliveryChange('pickup', this)" class="sr-only"/>
+            </label>
+          </div>
+
+          <div id="courierAddressBox">
+            <label class="block text-xs font-bold text-primary mb-1 uppercase tracking-wider">Адрес доставки *</label>
+            <input type="text" id="orderAddress" required value="г. Брест, ул. Московская, 267" class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-2.5 text-xs focus:ring-1 focus:ring-primary focus:border-primary"/>
+          </div>
+
+          <div id="pickupSelectBox" class="hidden flex-col gap-2">
+            <label class="block text-xs font-bold text-primary mb-1 uppercase tracking-wider">Выберите пункт выдачи *</label>
+            <select id="pickupArenaSelect" class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-2.5 text-xs focus:ring-1 focus:ring-primary focus:border-primary">
+              <option value="brest">Ледовый дворец спорта (г. Брест, ул. Московская 151)</option>
+              <option value="minsk">Минск-Арена (г. Минск, пр. Победителей 111)</option>
+              <option value="cska">ЦСКА Арена (г. Москва, ул. Автозаводская 23А)</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full bg-primary text-white dark:text-black py-4 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-secondary hover:text-white transition-all active:scale-95 shadow-md flex items-center justify-center gap-2">
+          Перейти к оплате
+          <span class="material-symbols-outlined text-base">arrow_forward</span>
+        </button>
+      </form>
+    </section>
+
+    <section id="screen-payment" class="screen-view flex-col gap-6 max-w-md mx-auto">
+      <div>
+        <div class="flex justify-between items-center mb-1 text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+          <span>Оформление</span>
+          <span class="text-secondary">Оплата</span>
+        </div>
+        <div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+          <div class="h-full bg-secondary w-full rounded-full"></div>
+        </div>
+        <h2 class="text-2xl font-black text-primary uppercase tracking-tight mt-4">Способ оплаты</h2>
+        <p class="text-xs text-on-surface-variant">Безопасный ввод данных банковской карты.</p>
+      </div>
+
+      <div class="virtual-card p-6 rounded-3xl bg-gradient-to-tr from-slate-950 via-slate-900 to-red-950 text-white shadow-2xl relative overflow-hidden flex flex-col justify-between h-52 border border-white/10">
+        <div class="flex justify-between items-start">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-secondary text-2xl">sports_hockey</span>
+            <span class="font-black text-xs tracking-widest uppercase">PRO HOCKEY PAY</span>
+          </div>
+          <span class="material-symbols-outlined text-3xl opacity-60">contactless</span>
+        </div>
+        <div class="font-mono text-xl sm:text-2xl tracking-widest" id="cardPreviewNumber">•••• •••• •••• ••••</div>
+        <div class="flex justify-between items-end">
+          <div>
+            <div class="text-[9px] uppercase tracking-wider text-slate-400">Владелец</div>
+            <div class="font-bold text-sm tracking-wider uppercase font-mono" id="cardPreviewHolder">PAVEL PIKTA</div>
+          </div>
+          <div class="text-right">
+            <div class="text-[9px] uppercase tracking-wider text-slate-400">Срок</div>
+            <div class="font-bold text-sm tracking-wider font-mono" id="cardPreviewExpiry">12/28</div>
+          </div>
+        </div>
+      </div>
+
+      <form id="paymentForm" onsubmit="handlePaymentSubmit(event)" class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-5 flex flex-col gap-3 shadow-sm">
+        <div>
+          <label class="block text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-wider">Номер карты</label>
+          <div class="relative">
+            <input type="text" id="payCardNumber" required maxlength="19" placeholder="0000 0000 0000 0000" oninput="formatCardNumberInput(this)" class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl pl-4 pr-10 py-2.5 text-xs font-mono focus:ring-1 focus:ring-primary focus:border-primary"/>
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline-variant text-xl">credit_card</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-wider">Срок действия</label>
+            <input type="text" id="payCardExpiry" required maxlength="5" placeholder="ММ/ГГ" oninput="formatCardExpiryInput(this)" class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-2.5 text-xs font-mono focus:ring-1 focus:ring-primary focus:border-primary"/>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-wider">CVV</label>
+            <input type="password" id="payCardCvv" required maxlength="3" placeholder="123" class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-2.5 text-xs font-mono focus:ring-1 focus:ring-primary focus:border-primary"/>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-wider">Имя на карте</label>
+          <input type="text" id="payCardHolder" required value="PAVEL PIKTA" placeholder="PAVEL PIKTA" oninput="updateCardHolderPreview(this)" class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-2.5 text-xs font-mono uppercase focus:ring-1 focus:ring-primary focus:border-primary"/>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-outline-variant/20">
+          <span class="text-xs font-bold text-on-surface-variant">Итоговая сумма:</span>
+          <span id="paymentTotalAmount" class="text-xl font-black text-primary">0 ₽</span>
+        </div>
+
+        <button type="submit" class="w-full bg-secondary text-white py-4 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-secondary-container transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2 mt-2">
+          <span>Подтвердить оплату</span>
+          <span class="material-symbols-outlined text-base">check_circle</span>
+        </button>
+      </form>
+    </section>
+
+    <section id="screen-showroom" class="screen-view flex-col gap-6 max-w-5xl mx-auto">
+      <div class="relative h-72 md:h-96 rounded-3xl overflow-hidden shadow-xl border border-outline-variant/30">
+        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeFoh-ZX6eH9_aJ_2U6WrjcRlaA9YEbPLe5h6tVjMoIpdIEgQ3U1BR-8im4uOlGcyK7Gf_QX-Ak9BnsqWU2uZFV-GqzDWP-VugWREOwR_QTRZxed2XauZT_dGEXULUdE_yeqGGTYBS63JBJxr7s39MeFz5aXh30XKkPbXgWuOB2VeZk9aJRYovq7Xs6nttLHHsVRRn-I7glDvrut7yr0mN3J5f7zDdlhkbr8LwdjB3FRymwGVCwiUp7wnfmAA02a-AX5uGe7P2irOF" alt="Шоурум" class="w-full h-full object-cover"/>
+        <div class="absolute inset-0 bg-gradient-to-t from-primary-container/90 via-primary-container/40 to-transparent"></div>
+        <div class="absolute bottom-6 left-6 max-w-xl text-white">
+          <span class="px-2.5 py-1 bg-secondary text-white text-[10px] font-bold rounded uppercase tracking-wider mb-2 inline-block">Флагманский магазин</span>
+          <h2 class="text-3xl font-black uppercase tracking-tight">ШОУРУМ PRO HOCKEY</h2>
+          <p class="text-xs md:text-sm text-surface-container-high mt-1">Оцените точную инженерию лично. Экспертный подбор жесткости, сканирование стопы 3D и кастомный pro-stock инвентарь.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-5 flex flex-col justify-between shadow-sm">
+          <div>
+            <div class="flex items-center gap-2 mb-3 text-primary">
+              <span class="material-symbols-outlined text-secondary font-fill">location_on</span>
+              <h3 class="font-bold text-base">Адрес шоурума</h3>
+            </div>
+            <p class="text-xs text-on-surface-variant leading-relaxed">
+              г. Брест, ул. Московская, 151<br/>
+              Ледовый дворец спорта, центральный вход
+            </p>
+          </div>
+          <button onclick="navigateTo('map')" class="mt-4 text-xs font-bold text-secondary hover:underline flex items-center gap-1 uppercase tracking-wider">
+            Показать на карте <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </button>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-5 flex flex-col justify-between shadow-sm">
+          <div>
+            <div class="flex items-center gap-2 mb-3 text-primary">
+              <span class="material-symbols-outlined text-secondary font-fill">schedule</span>
+              <h3 class="font-bold text-base">Режим работы</h3>
+            </div>
+            <ul class="text-xs text-on-surface-variant space-y-1.5">
+              <li class="flex justify-between"><span>Пн - Пт:</span><span class="font-bold text-on-surface">10:00 - 20:00</span></li>
+              <li class="flex justify-between"><span>Суббота:</span><span class="font-bold text-on-surface">09:00 - 18:00</span></li>
+              <li class="flex justify-between"><span>Воскресенье:</span><span class="font-bold text-secondary">Игровой день (10:00 - 16:00)</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="bg-primary-container text-white rounded-2xl p-5 flex flex-col justify-between shadow-sm">
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <span class="material-symbols-outlined text-secondary font-fill">call</span>
+              <h3 class="font-bold text-base text-white">Прямая линия</h3>
+            </div>
+            <a href="tel:+375291234567" class="text-xl font-black font-mono hover:text-secondary transition-colors block">
+              +375 29 123-45-67
+            </a>
+            <p class="text-[11px] text-surface-container-high mt-1">Консультация действующих сервис-мастеров и хоккеистов.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-map" class="screen-view flex-col gap-6 max-w-7xl mx-auto">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <span class="text-secondary font-bold text-xs uppercase tracking-wider block">Сервисы, заточка и выдача заказов</span>
+          <h2 class="text-2xl md:text-3xl font-black text-primary uppercase tracking-tight">Интерактивная карта ледовых арен</h2>
+        </div>
+        <div class="flex items-center gap-2 bg-surface-container-lowest p-1.5 rounded-2xl border border-outline-variant/40 shadow-sm">
+          <button onclick="setMapTileMode('streets')" id="mapModeBtn-streets" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-primary text-white">Схема Google</button>
+          <button onclick="setMapTileMode('satellite')" id="mapModeBtn-satellite" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-on-surface-variant hover:text-primary">Спутник</button>
+          <button onclick="setMapTileMode('dark')" id="mapModeBtn-dark" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-on-surface-variant hover:text-primary">Ночной лед</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div class="lg:col-span-8 bg-surface-container-lowest rounded-3xl border border-outline-variant/40 p-2 shadow-xl relative overflow-hidden">
+          <div class="absolute top-5 left-5 z-[500] flex gap-2">
+            <div class="bg-surface/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-outline-variant/40 shadow flex items-center gap-2 text-xs font-bold">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+              <span>Online: 3 арены подключены к выдаче</span>
+            </div>
+            <button onclick="centerMapToUserLocation()" class="bg-surface/90 hover:bg-surface backdrop-blur-md text-primary w-9 h-9 rounded-xl border border-outline-variant/40 shadow flex items-center justify-center transition-transform active:scale-90" title="Мое местоположение">
+              <span class="material-symbols-outlined text-lg">my_location</span>
+            </button>
+          </div>
+
+          <div id="interactiveMapContainer" class="w-full h-[480px] lg:h-[580px] rounded-2xl overflow-hidden"></div>
+        </div>
+
+        <div class="lg:col-span-4 flex flex-col gap-4">
+          <div class="bg-surface-container-lowest p-4 rounded-3xl border border-outline-variant/40 shadow-sm flex flex-col gap-2">
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-lg">search</span>
+              <input type="text" id="arenaSearchInput" oninput="filterArenasOnMap(this.value)" placeholder="Поиск по арене или городу..." class="w-full bg-surface-container-low border border-outline-variant rounded-xl pl-10 pr-3 py-2 text-xs font-medium focus:ring-1 focus:ring-primary"/>
+            </div>
+            <div class="flex gap-1.5 overflow-x-auto scrollbar-none pt-1">
+              <button onclick="filterArenaByTag('all', this)" class="arena-filter-tag active px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all bg-primary text-white">Все</button>
+              <button onclick="filterArenaByTag('fbv', this)" class="arena-filter-tag px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all bg-surface-container text-on-surface-variant">FBV Заточка</button>
+              <button onclick="filterArenaByTag('showroom', this)" class="arena-filter-tag px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all bg-surface-container text-on-surface-variant">Шоурум</button>
+              <button onclick="filterArenaByTag('custom', this)" class="arena-filter-tag px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all bg-surface-container text-on-surface-variant">Кастом-лаборатория</button>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-3 max-h-[460px] overflow-y-auto custom-scrollbar pr-1" id="arenaSidebarCardsList"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-profile" class="screen-view flex-col gap-6 max-w-5xl mx-auto">
+      <div class="relative bg-surface-container-lowest rounded-3xl border border-outline-variant/30 p-6 md:p-8 shadow-xl overflow-hidden">
+        <div class="absolute top-0 left-0 right-0 h-36 bg-gradient-to-r from-[#0d1424] via-secondary to-[#0d1424] opacity-95"></div>
+        <div class="absolute top-3 right-4 z-10 opacity-10 text-white font-mono font-black text-8xl select-none pointer-events-none hidden md:block">#99</div>
+
+        <div class="relative z-10 flex flex-col md:flex-row items-center md:items-end justify-between gap-6 pt-14">
+          <div class="flex flex-col md:flex-row items-center gap-5 text-center md:text-left">
+            <div class="relative w-32 h-32 rounded-full border-4 border-surface shadow-2xl overflow-hidden bg-primary flex-shrink-0 group">
+              <img id="profileUserAvatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC52oOu8xzAE0rkk4tVs7KMTL4hAWmuYijiq1QPdfjOpcIaTARsBLAG61NKftdVLOafOeUorHiINCSdVK7D8C4XpQPFqCV6XJpOBz3DOMMyJsv1oIRTH67hEoR5PyS_PM4IcnyQYhFr_9rONHlcxT1so9Covx6GRtfTovyYzeEKS9stAOUx1AtBJIqzYdsoOnnWAspS72EASjUYU7br34DrUJAXtpd4ImCSpGmE-qKv7s9aZsFfQ3zIq0rpfDUsSDNHdfX60cOW5sxG" alt="Павел Пикта" class="w-full h-full object-cover"/>
+              <button onclick="triggerAvatarUploadPrompt()" class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                <span class="material-symbols-outlined text-base">photo_camera</span>
+              </button>
+            </div>
+            <div>
+              <div class="flex items-center justify-center md:justify-start gap-2">
+                <h2 class="text-2xl md:text-3xl font-black text-primary" id="profileDisplayFullName">Павел Пикта</h2>
+                <span class="material-symbols-outlined text-secondary font-fill text-xl" title="Верифицированный игрок КХЛ/МХЛ">verified</span>
+              </div>
+              <p class="text-xs font-bold text-secondary uppercase tracking-wider mt-0.5" id="profileDisplayRole">Нападающий #99 • ХК «Брест» / Pro Stock Elite</p>
+              
+              <div class="flex flex-wrap justify-center md:justify-start gap-2.5 text-xs text-on-surface-variant font-medium mt-3">
+                <span class="bg-surface-container-low px-3 py-1 rounded-xl border border-outline-variant/30">Рост: <strong id="profileDisplayHeight" class="text-primary font-bold">186 см</strong></span>
+                <span class="bg-surface-container-low px-3 py-1 rounded-xl border border-outline-variant/30">Вес: <strong id="profileDisplayWeight" class="text-primary font-bold">86 кг</strong></span>
+                <span class="bg-surface-container-low px-3 py-1 rounded-xl border border-outline-variant/30">Хват: <strong id="profileDisplayHand" class="text-primary font-bold">Левый (L)</strong></span>
+                <span class="bg-surface-container-low px-3 py-1 rounded-xl border border-outline-variant/30">Стаж: <strong class="text-primary font-bold">12 лет на льду</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5">
+            <button onclick="openPlayerPassportQRModal()" class="px-4 py-2.5 rounded-xl border border-outline-variant text-xs font-bold hover:bg-surface-container-low transition-colors flex items-center gap-1.5 shadow-sm">
+              <span class="material-symbols-outlined text-base text-secondary">qr_code_2</span>
+              <span>QR Пропуск на лед</span>
+            </button>
+            <button onclick="openEditProfileModal()" class="bg-primary text-white dark:text-black hover:bg-secondary hover:text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shadow">
+              Редактировать
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col justify-between">
+          <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Скорость щелчка</span>
+          <div class="text-2xl font-black text-primary font-mono mt-2">142 <span class="text-xs font-bold text-secondary">км/ч</span></div>
+          <div class="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden mt-2">
+            <div class="bg-secondary h-full rounded-full" style="width: 88%;"></div>
+          </div>
+        </div>
+        <div class="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col justify-between">
+          <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Точность кистевого</span>
+          <div class="text-2xl font-black text-primary font-mono mt-2">94 <span class="text-xs font-bold text-secondary">%</span></div>
+          <div class="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden mt-2">
+            <div class="bg-primary h-full rounded-full" style="width: 94%;"></div>
+          </div>
+        </div>
+        <div class="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col justify-between">
+          <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Скорость на виражах</span>
+          <div class="text-2xl font-black text-primary font-mono mt-2">38.4 <span class="text-xs font-bold text-secondary">км/ч</span></div>
+          <div class="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden mt-2">
+            <div class="bg-secondary h-full rounded-full" style="width: 82%;"></div>
+          </div>
+        </div>
+        <div class="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col justify-between">
+          <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Реакция схода</span>
+          <div class="text-2xl font-black text-primary font-mono mt-2">0.18 <span class="text-xs font-bold text-secondary">сек</span></div>
+          <div class="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden mt-2">
+            <div class="bg-emerald-500 h-full rounded-full" style="width: 96%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-none border-b border-outline-variant/30" id="profileTabsNav">
+        <button onclick="switchProfileSection('gear')" class="profile-tab-btn active px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all" data-ptab="gear">
+          Мой баул (Инвентарь)
+        </button>
+        <button onclick="switchProfileSection('orders')" class="profile-tab-btn px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all" data-ptab="orders">
+          Заказы и трекинг доставки
+        </button>
+        <button onclick="switchProfileSection('bonus')" class="profile-tab-btn px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all" data-ptab="bonus">
+          Карта лояльности Pro
+        </button>
+        <button onclick="switchProfileSection('service')" class="profile-tab-btn px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all" data-ptab="service">
+          Сервис и заточка FBV
+        </button>
+      </div>
+
+      <div id="profileSection-gear" class="profile-sub-view flex flex-col gap-4">
+        <div class="flex justify-between items-center">
+          <h3 class="text-base font-black text-primary uppercase">Текущая боевая экипировка в раздевалке</h3>
+          <button onclick="navigateTo('catalog')" class="text-secondary text-xs font-bold hover:underline flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">add</span> Добавить позицию
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="bg-surface-container-lowest p-5 rounded-3xl border border-outline-variant/40 flex flex-col gap-3 shadow-sm">
+            <div class="flex items-center gap-4">
+              <div class="w-16 h-16 rounded-2xl bg-surface-container-low p-2 flex items-center justify-center flex-shrink-0">
+                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTV6A6fWgFhLYzyVxcsjHpn-syKhig0VxOJm5FJ_1rA9vzk-jY009JINsxR6S-w6fLYIqx515rF3OyC_ZsnIFAuFbXyCWBDM_Si8ltWT5GSGZt227cwoZrWK_DCpG_u3VTyWEuTEZAWiCsCQOxcy09_rTg3PyIfi_buel3lH4-3hPlpbxzj5xGQ62y5wN0nq71j1XpMK_wZjDASDG_MfB6dTkCrHANkOiaCLNtMDvgsUDNbFzPaZn10VJb0RTUOm9OEy665VuqJuZk" alt="Клюшка" class="max-h-full max-w-full object-contain mix-blend-multiply"/>
+              </div>
+              <div class="flex-1 min-w-0">
+                <span class="text-[10px] font-bold uppercase text-secondary">Матчевая клюшка</span>
+                <h4 class="font-bold text-sm text-primary truncate">Bauer VaporX Carbon Pro</h4>
+                <p class="text-xs text-on-surface-variant">87 Flex • P92 (Matthews) • Grip</p>
+              </div>
+            </div>
+            <div class="bg-surface-container-low p-3 rounded-xl flex justify-between items-center text-xs">
+              <span>Ресурс прочности карбона:</span>
+              <strong class="text-emerald-600 font-bold">92% (Отличное)</strong>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="showToast('Статус клюшки: готова к игре')" class="flex-1 bg-surface-container-high py-2 rounded-xl text-xs font-bold hover:bg-surface-container-highest">В игре</button>
+              <button onclick="showToast('Заявка на перемотку ленты принята')" class="px-4 py-2 rounded-xl border border-outline-variant text-xs font-bold hover:bg-surface-container-low">Перемотать ленту</button>
+            </div>
+          </div>
+
+          <div class="bg-surface-container-lowest p-5 rounded-3xl border border-outline-variant/40 flex flex-col gap-3 shadow-sm">
+            <div class="flex items-center gap-4">
+              <div class="w-16 h-16 rounded-2xl bg-surface-container-low p-2 flex items-center justify-center flex-shrink-0">
+                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJfSq6bGQZsnkLQ0fwuVEIwWMAXwe4DM7A8bIcZqxnJSbN420tI-LVXxhW3LgVYpSSbvzEzP8rZdu-EIenO1H_JUbmvGKKSVRjzSHQgDx7QOuYYjgc3s4nD7nUmi4W8IzUCLGq3uSkP44iW37bx6RftUVST9BkkjmWHGDYSCiFXwy0MXdQrdxD731cEM81D8YcauJt2lDbnknA_pKqeO95QAovMr-shPMtUwKb308QX1L5xWbfsp9fehU2iSfoZI_uDIEpFt3ScRah" alt="Коньки" class="max-h-full max-w-full object-contain mix-blend-multiply"/>
+              </div>
+              <div class="flex-1 min-w-0">
+                <span class="text-[10px] font-bold uppercase text-secondary">Боевые коньки</span>
+                <h4 class="font-bold text-sm text-primary truncate">Bauer Supreme Elite Pro</h4>
+                <p class="text-xs text-on-surface-variant">Размер 9.5 • Fit 2 • Лезвия Pulse Ti</p>
+              </div>
+            </div>
+            <div class="bg-surface-container-low p-3 rounded-xl flex justify-between items-center text-xs">
+              <span>Острота лезвия FBV 100/75:</span>
+              <strong class="text-amber-500 font-bold">45% (Требует заточки)</strong>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="switchProfileSection('service')" class="flex-1 bg-secondary text-white py-2 rounded-xl text-xs font-bold hover:bg-secondary-container">Записаться на заточку</button>
+              <button onclick="showToast('Запасные лезвия в бауле в наличии')" class="px-4 py-2 rounded-xl border border-outline-variant text-xs font-bold hover:bg-surface-container-low">Сменить лезвия</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="profileSection-orders" class="profile-sub-view hidden flex-col gap-5">
+        <div class="flex justify-between items-center">
+          <h3 class="text-base font-black text-primary uppercase">Активные и выполненные заказы</h3>
+          <span class="text-xs text-on-surface-variant">Всего покупок: 2</span>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-3xl border border-outline-variant/40 p-6 shadow-sm flex flex-col gap-5">
+          <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 pb-3 border-b border-outline-variant/30">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-mono font-black text-primary">ЗАКАЗ #PH-2026-9114</span>
+                <span class="bg-secondary/10 text-secondary text-xs px-2.5 py-0.5 rounded-full font-bold">В пути на арену</span>
+              </div>
+              <p class="text-xs text-on-surface-variant mt-0.5">Курьер Pro Stock • Пункт: Ледовый дворец спорта (Брест)</p>
+            </div>
+            <button onclick="openOrderQRReceipt('PH-2026-9114')" class="bg-surface-container-low hover:bg-surface-container-high px-4 py-2 rounded-xl text-xs font-bold text-primary flex items-center gap-1.5 transition-colors">
+              <span class="material-symbols-outlined text-base text-secondary">qr_code_2</span>
+              <span>QR Получения</span>
+            </button>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-bold text-primary mb-2">
+              <span class="text-secondary">Принят</span>
+              <span class="text-secondary">Заточен FBV</span>
+              <span class="text-secondary">В пути</span>
+              <span class="text-outline">Готов к выдаче</span>
+            </div>
+            <div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+              <div class="bg-secondary h-full rounded-full transition-all duration-1000" style="width: 75%;"></div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-4 bg-surface-container-low p-3.5 rounded-2xl">
+            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuChiLBdHFz-acRkl4kQEmq5Pb1hiZZKejzRjq3ZtnHWtziRUxKVtTGYcL8VjLxoIMpuI8j7XeyQ9p-v2Pga0Tfi8ZDpFtyVCZ6DvuHEVlmJBxtgvTaLUhO71jH2YPEujxqb39yjH5hYPQ7WYc98UUszp1mSiXb8OAN3q5Ws8GoWdfU5v73q4y2nsmaOIQmYqziJIwQxqxBOzJx2g6e004j3zzNM7r-GjultHdjh1NmzszESYdb8Kh47O6cg20LIbxQfVBKeYvt2eWcy" alt="Коньки" class="w-14 h-14 object-contain mix-blend-multiply"/>
+            <div class="flex-1 min-w-0">
+              <h5 class="font-bold text-xs text-primary truncate">Коньки CCM Tacks AS-V Pro (Размер 9.5, Regular)</h5>
+              <p class="text-[11px] text-on-surface-variant">Включена услуга: Формовка ботинка в печи на арене</p>
+            </div>
+            <span class="font-black text-sm text-primary">64 900 ₽</span>
+          </div>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-3xl border border-outline-variant/40 p-6 shadow-sm flex flex-col gap-3">
+          <div class="flex justify-between items-center pb-2 border-b border-outline-variant/20">
+            <div>
+              <span class="text-xs font-mono font-bold text-primary">ЗАКАЗ #PH-8902</span>
+              <p class="text-[11px] text-on-surface-variant">24 октября 2026 • Выдан в руки игроку</p>
+            </div>
+            <span class="bg-emerald-500/10 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs font-fill">check_circle</span>
+              Выдан на арене
+            </span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-on-surface-variant">Клюшка Bauer VaporX Carbon Pro (87 Flex, P92)</span>
+            <span class="font-black text-primary">28 990 ₽</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="profileSection-bonus" class="profile-sub-view hidden flex-col gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div class="virtual-card p-7 rounded-3xl bg-gradient-to-tr from-[#0a1220] via-slate-900 to-[#b7102a] text-white shadow-2xl relative overflow-hidden flex flex-col justify-between h-56 border border-white/20">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-[9px] uppercase font-bold tracking-widest text-slate-300 block">Клубный паспорт атлета</span>
+                <h4 class="text-xl font-black tracking-tight">PRO HOCKEY VIP ELITE</h4>
+              </div>
+              <span class="material-symbols-outlined text-3xl text-secondary">military_tech</span>
+            </div>
+            <div class="font-mono text-lg tracking-widest text-slate-200">7799 •••• •••• 2026</div>
+            <div class="flex justify-between items-end">
+              <div>
+                <span class="text-[9px] uppercase tracking-wider text-slate-400 block">Владелец</span>
+                <span class="font-bold text-xs uppercase font-mono tracking-wider">PAVEL PIKTA</span>
+              </div>
+              <div class="text-right">
+                <span class="text-[9px] uppercase tracking-wider text-slate-400 block">Кэшбэк</span>
+                <span class="text-base font-black text-secondary">10% НА ВСЁ</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-surface-container-lowest p-6 rounded-3xl border border-outline-variant/40 shadow-sm flex flex-col gap-4">
+            <div>
+              <span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Баланс активных баллов:</span>
+              <div class="text-4xl font-black text-primary font-mono mt-1">2 450 <span class="text-lg font-bold text-secondary">баллов</span></div>
+              <p class="text-xs text-on-surface-variant mt-1">1 балл = 1 рубль скидки при заказе экипировки</p>
+            </div>
+            <div class="bg-surface-container-low p-4 rounded-2xl flex items-center justify-between">
+              <div>
+                <span class="text-xs font-bold text-primary block">Уровень: Легенда МХЛ</span>
+                <span class="text-[11px] text-on-surface-variant">50 баллов до уровня Континентальный Pro</span>
+              </div>
+              <span class="material-symbols-outlined text-secondary text-2xl">workspace_premium</span>
+            </div>
+            <button onclick="showToast('Баллы будут списаны на шаге оплаты')" class="w-full bg-primary text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-secondary transition-colors">
+              Использовать баллы в корзине
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="profileSection-service" class="profile-sub-view hidden flex-col gap-6">
+        <div class="bg-surface-container-lowest rounded-3xl border border-outline-variant/40 p-6 shadow-sm flex flex-col gap-5">
+          <div>
+            <span class="text-secondary font-bold text-xs uppercase tracking-wider block">Официальный сервис Prosharp</span>
+            <h3 class="text-xl font-black text-primary uppercase tracking-tight">Запись на заточку и профилирование лезвий</h3>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-bold text-primary uppercase">Ледовая арена</label>
+              <select id="serviceArenaSelect" class="bg-surface-container-low border border-outline-variant rounded-xl py-2.5 px-3 text-xs font-bold">
+                <option value="brest">Ледовый дворец спорта (г. Брест)</option>
+                <option value="minsk">Минск-Арена (г. Минск)</option>
+                <option value="cska">ЦСКА Арена (г. Москва)</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-bold text-primary uppercase">Профиль заточки</label>
+              <select id="serviceProfileSelect" class="bg-surface-container-low border border-outline-variant rounded-xl py-2.5 px-3 text-xs font-bold">
+                <option value="fbv100">FBV 100/75 (Идеальный накат и сцепление)</option>
+                <option value="fbv90">FBV 90/75 (Максимальная маневренность)</option>
+                <option value="rad15">Классический желоб 15 мм (5/8")</option>
+                <option value="zuperior">Профиль Zuperior (Тройной радиус)</option>
+                <option value="quad">Профиль Quad 0.5 (Четырехзонный)</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-bold text-primary uppercase">Удобное время</label>
+              <select id="serviceTimeSelect" class="bg-surface-container-low border border-outline-variant rounded-xl py-2.5 px-3 text-xs font-bold">
+                <option>Сегодня, 17:30 (Перед раскаткой)</option>
+                <option>Сегодня, 19:00</option>
+                <option>Завтра, 10:00 (Утренняя тренировка)</option>
+                <option>Завтра, 14:00</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/30 flex justify-between items-center text-xs">
+            <span>Стоимость заточки FBV на станке Prosharp:</span>
+            <strong class="text-primary font-black text-sm">450 ₽</strong>
+          </div>
+
+          <button onclick="handleServiceBookingSubmit()" class="w-full bg-secondary text-white py-4 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-secondary-container transition-all active:scale-95 shadow-lg">
+            Подтвердить запись к мастеру
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-reviews" class="screen-view flex-col gap-6 max-w-3xl mx-auto">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-secondary font-bold text-xs uppercase tracking-wider">Мнения игроков</span>
+          <h2 class="text-2xl font-black text-primary uppercase tracking-tight">Отзывы о снаряжении</h2>
+        </div>
+        <button onclick="toggleReviewForm()" class="bg-secondary text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-secondary-container transition-all active:scale-95 flex items-center gap-1 shadow-md">
+          <span class="material-symbols-outlined text-sm">edit_square</span>
+          Написать отзыв
+        </button>
+      </div>
+
+      <div class="bg-surface-container-lowest rounded-3xl border border-outline-variant/30 p-6 flex flex-col md:flex-row gap-6 items-center shadow-sm">
+        <div class="text-center md:border-r md:border-outline-variant/30 md:pr-6">
+          <div class="text-4xl font-black text-primary">4.8</div>
+          <div class="flex text-secondary text-sm my-1 justify-center">
+            <span class="material-symbols-outlined font-fill text-lg">star</span>
+            <span class="material-symbols-outlined font-fill text-lg">star</span>
+            <span class="material-symbols-outlined font-fill text-lg">star</span>
+            <span class="material-symbols-outlined font-fill text-lg">star</span>
+            <span class="material-symbols-outlined font-fill text-lg">star_half</span>
+          </div>
+          <span class="text-xs text-on-surface-variant font-medium">128 проверенных отзывов</span>
+        </div>
+        <div class="flex-1 w-full flex flex-col gap-1.5 text-xs text-on-surface-variant">
+          <div class="flex items-center gap-2">
+            <span class="w-14">5 Звезд</span>
+            <div class="flex-1 h-2 bg-surface-container-high rounded-full overflow-hidden"><div class="h-full bg-primary w-[85%]"></div></div>
+            <span class="w-6 text-right">109</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-14">4 Звезды</span>
+            <div class="flex-1 h-2 bg-surface-container-high rounded-full overflow-hidden"><div class="h-full bg-primary w-[10%]"></div></div>
+            <span class="w-6 text-right">13</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="newReviewFormBox" class="hidden bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-5 flex flex-col gap-3 shadow-sm">
+        <h3 class="text-sm font-bold text-primary uppercase">Новый отзыв об экипировке</h3>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold text-on-surface-variant">Оценка:</span>
+          <div class="flex gap-1 text-secondary cursor-pointer" id="ratingStarsPicker">
+            <span onclick="setReviewRating(1)" class="material-symbols-outlined text-2xl font-fill star-pick">star</span>
+            <span onclick="setReviewRating(2)" class="material-symbols-outlined text-2xl font-fill star-pick">star</span>
+            <span onclick="setReviewRating(3)" class="material-symbols-outlined text-2xl font-fill star-pick">star</span>
+            <span onclick="setReviewRating(4)" class="material-symbols-outlined text-2xl font-fill star-pick">star</span>
+            <span onclick="setReviewRating(5)" class="material-symbols-outlined text-2xl font-fill star-pick">star</span>
+          </div>
+        </div>
+        <input type="text" id="reviewAuthorInput" placeholder="Ваше имя / Клуб" class="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-2 text-xs focus:ring-1 focus:ring-primary focus:border-primary"/>
+        <textarea id="reviewTextInput" rows="3" placeholder="Расскажите об ощущениях, балансе, жесткости клюшки..." class="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-2 text-xs focus:ring-1 focus:ring-primary focus:border-primary"></textarea>
+        <div class="flex justify-end gap-2">
+          <button onclick="toggleReviewForm()" class="px-4 py-2 text-xs font-bold text-on-surface-variant hover:bg-surface-container-high rounded-xl">Отмена</button>
+          <button onclick="submitNewReview()" class="bg-primary text-white px-5 py-2 text-xs font-bold uppercase rounded-xl hover:bg-secondary">Опубликовать</button>
+        </div>
+      </div>
+
+      <div id="reviewsFeedList" class="flex flex-col gap-3"></div>
+    </section>
+
+  </main>
+
+  <div id="sizeGuideModal" class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-surface-container-lowest w-full max-w-3xl rounded-3xl border border-outline-variant/30 shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
+      <div class="p-5 border-b border-outline-variant/30 flex items-center justify-between bg-surface-container-low">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary text-2xl">straighten</span>
+          <div>
+            <h3 class="font-black text-lg text-primary uppercase tracking-tight">Таблицы подбора размеров</h3>
+            <span class="text-xs text-on-surface-variant">Официальные размерные сетки Bauer, CCM, Warrior</span>
+          </div>
+        </div>
+        <button onclick="closeSizeGuideModal()" class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-surface-container-high text-outline transition-colors">
+          <span class="material-symbols-outlined text-xl">close</span>
+        </button>
+      </div>
+
+      <div class="flex gap-2 p-3.5 border-b border-outline-variant/20 overflow-x-auto scrollbar-none bg-surface-container-low" id="sizeGuideTabsContainer">
+        <button onclick="switchSizeGuideTab('sticks')" class="size-tab-btn active px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all" data-tab="sticks">Клюшки</button>
+        <button onclick="switchSizeGuideTab('skates')" class="size-tab-btn px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all" data-tab="skates">Коньки</button>
+        <button onclick="switchSizeGuideTab('helmets')" class="size-tab-btn px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all" data-tab="helmets">Шлемы</button>
+        <button onclick="switchSizeGuideTab('gloves')" class="size-tab-btn px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all" data-tab="gloves">Краги</button>
+        <button onclick="switchSizeGuideTab('protection')" class="size-tab-btn px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all" data-tab="protection">Защита</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto overscroll-contain flex-1 flex flex-col gap-6 custom-scrollbar" id="sizeGuideContentContainer"></div>
+
+      <div class="p-4 border-t border-outline-variant/20 bg-surface-container-low flex justify-between items-center text-xs">
+        <span class="text-on-surface-variant font-medium">Бесплатная примерка и термоформовка на аренах</span>
+        <button onclick="closeSizeGuideModal()" class="bg-primary text-white dark:text-black hover:bg-secondary hover:text-white px-6 py-2.5 rounded-xl font-bold uppercase tracking-wider transition-colors">
+          Закрыть
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="profileEditModal" class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-surface-container-lowest w-full max-w-lg rounded-3xl border border-outline-variant/30 shadow-2xl overflow-hidden p-6 flex flex-col gap-4">
+      <div class="flex items-center justify-between border-b border-outline-variant/30 pb-3">
+        <h3 class="text-lg font-black text-primary uppercase">Данные атлета</h3>
+        <button onclick="closeEditProfileModal()" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface-container-high text-outline">
+          <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+      </div>
+      <form onsubmit="saveProfileEdits(event)" class="flex flex-col gap-3 text-xs">
+        <div>
+          <label class="block font-bold text-primary mb-1 uppercase">ФИО Игрока</label>
+          <input type="text" id="editProfileNameInput" required class="w-full bg-surface-container-low border border-outline-variant rounded-xl px-3.5 py-2.5 text-xs font-bold"/>
+        </div>
+        <div>
+          <label class="block font-bold text-primary mb-1 uppercase">Клуб / Статус</label>
+          <input type="text" id="editProfileRoleInput" required class="w-full bg-surface-container-low border border-outline-variant rounded-xl px-3.5 py-2.5 text-xs font-bold"/>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block font-bold text-primary mb-1 uppercase">Рост (см)</label>
+            <input type="number" id="editProfileHeightInput" required class="w-full bg-surface-container-low border border-outline-variant rounded-xl px-3.5 py-2.5 text-xs font-bold"/>
+          </div>
+          <div>
+            <label class="block font-bold text-primary mb-1 uppercase">Вес (кг)</label>
+            <input type="number" id="editProfileWeightInput" required class="w-full bg-surface-container-low border border-outline-variant rounded-xl px-3.5 py-2.5 text-xs font-bold"/>
+          </div>
+          <div>
+            <label class="block font-bold text-primary mb-1 uppercase">Хват</label>
+            <select id="editProfileHandInput" class="w-full bg-surface-container-low border border-outline-variant rounded-xl px-3.5 py-2.5 text-xs font-bold">
+              <option value="Левый (L)">Левый (L)</option>
+              <option value="Правый (R)">Правый (R)</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="w-full bg-secondary text-white py-3.5 rounded-xl font-bold uppercase tracking-wider hover:bg-secondary-container transition-colors mt-2">
+          Сохранить изменения
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div id="playerQRModal" class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-surface-container-lowest w-full max-w-sm rounded-3xl border border-outline-variant/30 shadow-2xl p-6 flex flex-col items-center text-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center">
+        <span class="material-symbols-outlined text-3xl font-fill">qr_code_2</span>
+      </div>
+      <div>
+        <h4 class="text-lg font-black text-primary uppercase" id="qrModalTitle">Пропуск игрока #99</h4>
+        <p class="text-xs text-on-surface-variant mt-0.5" id="qrModalSubtitle">Предъявите на стойке выдачи или в раздевалке арены</p>
+      </div>
+      <div class="bg-white p-4 rounded-2xl border border-outline-variant/40 shadow-inner flex flex-col items-center justify-center">
+        <svg id="qrSvgCode" class="w-48 h-48" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <rect width="200" height="200" fill="#ffffff"/>
+          <path d="M20 20h60v60H20zM30 30v40h40V30zM45 45h10v10H45zM120 20h60v60h-60zM130 30v40h40V30zM145 45h10v10h-10zM20 120h60v60H20zM30 130v40h40v-40zM45 145h10v10H45zM100 20h10v20h-10zM100 50h10v30h-10zM20 90h20v10H20zM50 90h30v10H50zM90 90h20v20H90zM120 90h10v20h-10zM150 90h30v10h-30zM140 110h20v10h-20zM170 110h10v30h-10zM100 120h20v20h-20zM130 130h20v20h-20zM100 150h10v30h-10zM120 160h30v10h-30zM160 160h20v20h-20zM130 180h20v10h-20z" fill="#000000"/>
+        </svg>
+      </div>
+      <button onclick="closePlayerQRModal()" class="w-full bg-primary text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-secondary transition-colors">
+        Закрыть
+      </button>
+    </div>
+  </div>
+
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md border-t border-outline-variant/30 px-2 py-1.5 flex justify-around items-center shadow-2xl">
+    <button onclick="navigateTo('home')" class="mobile-nav-btn active flex flex-col items-center py-1 px-3 rounded-xl transition-all" data-target="home">
+      <span class="material-symbols-outlined text-2xl">home</span>
+      <span class="text-[10px] font-bold mt-0.5">Главная</span>
+    </button>
+    <button onclick="navigateTo('catalog')" class="mobile-nav-btn flex flex-col items-center py-1 px-3 rounded-xl transition-all" data-target="catalog">
+      <span class="material-symbols-outlined text-2xl">sports_hockey</span>
+      <span class="text-[10px] font-bold mt-0.5">Каталог</span>
+    </button>
+    <button onclick="navigateTo('cart')" class="mobile-nav-btn flex flex-col items-center py-1 px-3 rounded-xl transition-all relative" data-target="cart">
+      <span class="material-symbols-outlined text-2xl">shopping_cart</span>
+      <span class="text-[10px] font-bold mt-0.5">Корзина</span>
+      <span id="mobileCartBadge" class="absolute top-0 right-2 w-4 h-4 bg-secondary text-white text-[9px] font-bold rounded-full flex items-center justify-center scale-0 transition-transform duration-300">0</span>
+    </button>
+    <button onclick="navigateTo('profile')" class="mobile-nav-btn flex flex-col items-center py-1 px-3 rounded-xl transition-all" data-target="profile">
+      <span class="material-symbols-outlined text-2xl">person</span>
+      <span class="text-[10px] font-bold mt-0.5">Профиль</span>
+    </button>
+  </nav>
+
+  <script src="app.js"></script>
+</body>
+</html>
